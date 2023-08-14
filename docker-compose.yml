@@ -15,6 +15,5 @@ volumes:
 networks:
   letztalk_network:
     driver: overlay
-    attachable: true
     external: true
 
