@@ -1,0 +1,11 @@
+{
+  "name": "mongodump-s3-service",
+  "version": "1.0.0",
+  "scripts": {},
+  "author": "",
+  "devDependencies": {
+    "aws-sdk": "^2.1560.0",
+    "date-fns": "^3.3.1",
+    "dotenv": "^16.4.4"
+  }
+}
