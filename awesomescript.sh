@@ -69,3 +69,5 @@ else
 		curl --retry 3 $HEALTHCHECK_IO_CHECK_URL/fail
 	fi
 fi
+
+node ./deleteOldBackupsFromS3.js

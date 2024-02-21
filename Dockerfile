@@ -1,8 +1,9 @@
-FROM alpine
+FROM node:alpine
 
 # set working directory
 WORKDIR /usr/local/bin
 
+COPY package*.json ./
 COPY awesomescript.sh myawesomescript.sh
 COPY setcron.sh setcron.sh
 
@@ -31,6 +32,10 @@ RUN echo "Install aws-cli" && \
     apk add \ 
     --update py-pip groff less mailcap \
     && pip install awscli
+
+RUN npm install
+
+COPY . .
 
 RUN rm /var/cache/apk/*
 
