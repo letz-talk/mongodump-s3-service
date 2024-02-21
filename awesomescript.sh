@@ -2,7 +2,15 @@
 
 if [[ $KEEP_OLD_FILES_DAYS == "" ]]
 then
-	echo "skipping old file deletions"
+
+	if [[ $KEEP_OLD_FILES_MINUTES == "" ]]
+	then
+		echo "skipping old file deletions"
+	else
+		echo "deleting old files"
+		find /usr/files -mmin +$KEEP_OLD_FILES_MINUTES -exec rm -f {} \;
+	fi
+
 else
 	echo "deleting old files"
 	find /usr/files -mtime +$KEEP_OLD_FILES_DAYS -exec rm -f {} \;
