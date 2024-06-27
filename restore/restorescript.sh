@@ -7,7 +7,7 @@ AUTH_DB=${AUTH_DB}
 MONGO_USER=${MONGO_USER}
 MONGO_PASSWORD=${MONGO_PASSWORD}
 MONGO_URI="mongodb://${MONGO_USER}:${MONGO_PASSWORD}@${MONGO_HOST}:${MONGO_PORT}/admin?authSource=${AUTH_DB}"
-ARCHIVE_PATH="./mongodump_26-06-2024-20_00_01.zip"
+ARCHIVE_PATH="/usr/files/mongodump_26-06-2024-20_00_01.zip"
 
 echo "Начало процесса восстановления MongoDB из архива $ARCHIVE_PATH..."
 
