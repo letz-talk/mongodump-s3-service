@@ -22,11 +22,6 @@ RUN echo "Install Curl as dependency" && \
     apk add \
     curl
 
-RUN echo "Install aws-cli" && \
-    apk add \ 
-    --update py-pip groff less mailcap \
-    && pip install awscli
-
 RUN rm /var/cache/apk/*
 
 CMD restorescript.sh
