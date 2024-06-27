@@ -1,0 +1,19 @@
+version: "3.4"
+services:
+  bck_service_restore:
+    env_file:
+      - .env
+    build: .
+    networks:
+      - letztalk_network
+    volumes:
+      - ../../:/usr/files
+
+volumes:
+  backup_vol:
+
+networks:
+  letztalk_network:
+    driver: overlay
+    external: true
+
