@@ -7,7 +7,7 @@ services:
     networks:
       - letztalk_network
     volumes:
-      - ../../:/usr/files
+      - ../../../:/usr/files
 
 volumes:
   backup_vol:
