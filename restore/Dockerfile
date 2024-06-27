@@ -3,9 +3,9 @@ FROM node:alpine
 # set working directory
 WORKDIR /usr/local/bin
 
-COPY restorscript.sh myawesomescript.sh
+COPY restorescript.sh restorescript.sh
 
-RUN chmod +x myawesomescript.sh
+RUN chmod +x restorescript.sh
 
 RUN apk add bash
 
@@ -27,10 +27,6 @@ RUN echo "Install aws-cli" && \
     --update py-pip groff less mailcap \
     && pip install awscli
 
-RUN npm install
-
-COPY . .
-
 RUN rm /var/cache/apk/*
 
-CMD setcron.sh
+CMD restorescript.sh
