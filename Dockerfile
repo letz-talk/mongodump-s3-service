@@ -21,10 +21,12 @@ RUN echo "Install System dependencies" && \
 RUN apk add --no-cache tzdata
 
 RUN echo "Install MongoDB dependencies" && \
-    apk add --no-cache mongodb-tools
+    apk add \
+    mongodb-tools
 
 RUN echo "Install Curl as dependency" && \
-    apk add --no-cache curl
+    apk add \
+    curl
 
 RUN echo "Install aws-cli" && \
     apk add --no-cache aws-cli
