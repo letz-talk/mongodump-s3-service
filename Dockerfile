@@ -9,9 +9,16 @@ COPY setcron.sh setcron.sh
 
 COPY instant.sh instant
 
+COPY . .
+
+# Set permissions after all COPY operations
 RUN chmod +x instant
 RUN chmod +x myawesomescript.sh
 RUN chmod +x setcron.sh
+# Ensure node user can execute scripts
+RUN chown node:node instant myawesomescript.sh setcron.sh
+# Ensure crontab file is accessible
+RUN touch /etc/crontabs/root && chmod 0644 /etc/crontabs/root
 
 RUN apk add bash
 
@@ -32,8 +39,6 @@ RUN echo "Install aws-cli" && \
     apk add --no-cache aws-cli
 
 RUN npm install
-
-COPY . .
 
 RUN rm /var/cache/apk/*
 
