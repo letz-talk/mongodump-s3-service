@@ -36,7 +36,7 @@ RUN echo "Install Curl as dependency" && \
 RUN echo "Install aws-cli" && \
     apk add \
     --no-cache py3-pip groff less mailcap && \
-    pip install awscli==1.18.223 --break-system-packages
+    pip install awscli==2.22.30 --break-system-packages
 
 RUN npm install
 
