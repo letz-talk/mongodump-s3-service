@@ -1,4 +1,4 @@
-FROM node:alpine
+FROM node:18.16-alpine
 
 # set working directory
 WORKDIR /usr/local/bin
@@ -36,7 +36,7 @@ RUN echo "Install Curl as dependency" && \
 RUN echo "Install aws-cli" && \
     apk add \
     --no-cache py3-pip groff less mailcap python3 && \
-    pip install awscli==1.25.0 six==1.16.0 --break-system-packages
+    pip install awscli six --break-system-packages
 
 RUN npm install
 
