@@ -15,8 +15,6 @@ COPY . .
 RUN chmod +x instant
 RUN chmod +x myawesomescript.sh
 RUN chmod +x setcron.sh
-# Ensure node user can execute scripts
-RUN chown node:node instant myawesomescript.sh setcron.sh
 # Ensure crontab file is accessible
 RUN touch /etc/crontabs/root && chmod 0644 /etc/crontabs/root
 
@@ -38,7 +36,7 @@ RUN echo "Install Curl as dependency" && \
 RUN echo "Install aws-cli" && \
     apk add \
     --no-cache py3-pip groff less mailcap && \
-    pip install awscli --break-system-packages
+    pip install awscli==1.18.223 --break-system-packages
 
 RUN npm install
 
