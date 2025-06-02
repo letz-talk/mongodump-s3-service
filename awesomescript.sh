@@ -1,4 +1,4 @@
-#!/bin/bashMore actions
+#!/bin/bash
 
 if [[ $KEEP_OLD_FILES_DAYS == "" ]]
 then
