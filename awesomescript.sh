@@ -78,4 +78,4 @@ else
 	fi
 fi
 
-node ./deleteOldBackupsFromS3.js
+# node ./deleteOldBackupsFromS3.js
