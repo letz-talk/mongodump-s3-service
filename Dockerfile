@@ -1,45 +1,20 @@
-FROM node:18.16-alpine
+# Используем официальный образ Ubuntu как основу
+FROM ubuntu:20.04
 
-# set working directory
-WORKDIR /usr/local/bin
+# Устанавливаем переменные окружения для избежания интерактивных запросов
+ENV DEBIAN_FRONTEND=noninteractive
 
-COPY package*.json ./
-COPY awesomescript.sh myawesomescript.sh
-COPY setcron.sh setcron.sh
+# Устанавливаем необходимые пакеты
+RUN apt-get update && apt-get install -y \
+    s3cmd \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
-COPY instant.sh instant
+# Копируем sh-скрипт в контейнер
+COPY awesomescript.sh /usr/local/bin/awesomescript.sh
 
-COPY . .
+# Делаем скрипт исполняемым
+RUN chmod +x /usr/local/bin/awesomescript.sh
 
-# Set permissions after all COPY operations
-RUN chmod +x instant
-RUN chmod +x myawesomescript.sh
-RUN chmod +x setcron.sh
-# Ensure crontab file is accessible
-RUN touch /etc/crontabs/root && chmod 0644 /etc/crontabs/root
-
-RUN apk add bash
-
-RUN echo "Install System dependencies" && \
-    apk add --no-cache
-
-RUN apk add --no-cache tzdata
-
-RUN echo "Install MongoDB dependencies" && \
-    apk add \
-    mongodb-tools
-
-RUN echo "Install Curl as dependency" && \
-    apk add \
-    curl
-
-RUN echo "Install aws-cli" && \
-    apk add \
-    --no-cache py3-pip groff less mailcap python3 && \
-    pip install awscli six --break-system-packages
-
-RUN npm install
-
-RUN rm /var/cache/apk/*
-
-CMD setcron.sh
+# Указываем точку входа
+ENTRYPOINT ["/usr/local/bin/setcron.sh"]
