@@ -12,6 +12,8 @@ RUN apt-get update && apt-get install -y \
 
 # Копируем sh-скрипт в контейнер
 COPY awesomescript.sh /usr/local/bin/awesomescript.sh
+COPY setcron.sh /usr/local/bin/setcron.sh
+COPY instant.sh /usr/local/bin/instant.sh
 
 # Делаем скрипт исполняемым
 RUN chmod +x /usr/local/bin/awesomescript.sh
