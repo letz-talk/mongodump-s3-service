@@ -40,9 +40,6 @@ else
     echo "Skipping user authentication"
 fi
 
-# Debug mongodump parameters
-echo "mongodump args: ${args[@]}"
-
 # Check S3 environment variables
 if [[ -z "$ACCESS_KEY_ID" || -z "$SECRET_ACCESS_KEY" || -z "$ENDPOINT" || -z "$BUCKET_NAME" ]]; then
     echo "Error: Missing required S3 environment variables (ACCESS_KEY_ID, SECRET_ACCESS_KEY, ENDPOINT, BUCKET_NAME)"
