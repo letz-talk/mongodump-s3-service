@@ -8,6 +8,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y \
     s3cmd \
     curl \
+    mongodb-tools \
+    cron \
     && rm -rf /var/lib/apt/lists/*
 
 # Копируем sh-скрипт в контейнер
@@ -18,5 +20,6 @@ COPY instant.sh /usr/local/bin/instant.sh
 # Делаем скрипт исполняемым
 RUN chmod +x /usr/local/bin/awesomescript.sh /usr/local/bin/setcron.sh /usr/local/bin/instant.sh
 
+RUN mkdir -p /etc/cron.d && touch /etc/crontab && chmod 0644 /etc/crontab
 # Указываем точку входа
 ENTRYPOINT ["/usr/local/bin/setcron.sh"]
