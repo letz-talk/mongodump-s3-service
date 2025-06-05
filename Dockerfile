@@ -5,9 +5,14 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y \
     s3cmd \
     curl \
-    mongodb-clients \
     cron \
+    wget \
     && rm -rf /var/lib/apt/lists/*
+
+# Install mongodb-database-tools compatible with MongoDB 5.0
+RUN wget https://fastdl.mongodb.org/tools/db/mongodb-database-tools-ubuntu2004-x86_64-100.5.0.deb && \
+    dpkg -i mongodb-database-tools-*.deb && \
+    rm mongodb-database-tools-*.deb
 
 # Copy scripts
 COPY awesomescript.sh /usr/local/bin/awesomescript.sh

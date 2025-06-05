@@ -27,7 +27,7 @@ path=/usr/files/
 filename=$(echo mongodump_$dateString.zip)
 echo "Creating $path$filename"
 
-args=("--host" $MONGO_HOST "--port" $MONGO_PORT "--archive=$path$filename" "--gzip")
+args=("--host" "$MONGO_HOST" "--port" "$MONGO_PORT" "--archive=$path$filename" "--gzip")
 
 if [[ $AUTH_DB == "" ]]; then
     echo "Setting default authentication database as 'admin'"
@@ -35,10 +35,13 @@ if [[ $AUTH_DB == "" ]]; then
 fi
 
 if [[ $MONGO_USER != "" && $MONGO_PASSWORD != "" ]]; then
-    args+=("--username" $MONGO_USER "--password" $MONGO_PASSWORD "--authenticationDatabase=$AUTH_DB")
+    args+=("--username" "$MONGO_USER" "--password" "$MONGO_PASSWORD" "--authenticationDatabase=$AUTH_DB")
 else
     echo "Skipping user authentication"
 fi
+
+# Debug mongodump parameters
+echo "mongodump args: ${args[@]}"
 
 # Check S3 environment variables
 if [[ -z "$ACCESS_KEY_ID" || -z "$SECRET_ACCESS_KEY" || -z "$ENDPOINT" || -z "$BUCKET_NAME" ]]; then
