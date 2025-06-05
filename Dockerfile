@@ -1,25 +1,24 @@
-# Используем официальный образ Ubuntu как основу
 FROM ubuntu:20.04
-
-# Устанавливаем переменные окружения для избежания интерактивных запросов
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Устанавливаем необходимые пакеты
+# Install required packages
 RUN apt-get update && apt-get install -y \
     s3cmd \
     curl \
-    mongodb-tools \
+    mongo-tools \
     cron \
     && rm -rf /var/lib/apt/lists/*
 
-# Копируем sh-скрипт в контейнер
+# Copy scripts
 COPY awesomescript.sh /usr/local/bin/awesomescript.sh
 COPY setcron.sh /usr/local/bin/setcron.sh
 COPY instant.sh /usr/local/bin/instant.sh
 
-# Делаем скрипт исполняемым
+# Make scripts executable
 RUN chmod +x /usr/local/bin/awesomescript.sh /usr/local/bin/setcron.sh /usr/local/bin/instant.sh
 
+# Create crontab file
 RUN mkdir -p /etc/cron.d && touch /etc/crontab && chmod 0644 /etc/crontab
-# Указываем точку входа
+
+# Set entrypoint
 ENTRYPOINT ["/usr/local/bin/setcron.sh"]
