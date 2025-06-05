@@ -16,7 +16,7 @@ COPY setcron.sh /usr/local/bin/setcron.sh
 COPY instant.sh /usr/local/bin/instant.sh
 
 # Делаем скрипт исполняемым
-RUN chmod +x /usr/local/bin/awesomescript.sh
+RUN chmod +x /usr/local/bin/awesomescript.sh /usr/local/bin/setcron.sh /usr/local/bin/instant.sh
 
 # Указываем точку входа
 ENTRYPOINT ["/usr/local/bin/setcron.sh"]
