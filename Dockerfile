@@ -5,7 +5,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y \
     s3cmd \
     curl \
-    mongo-tools \
+    mongodb-clients \
     cron \
     && rm -rf /var/lib/apt/lists/*
 
