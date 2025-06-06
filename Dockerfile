@@ -23,7 +23,7 @@ COPY instant.sh /usr/local/bin/instant.sh
 RUN chmod +x /usr/local/bin/awesomescript.sh /usr/local/bin/setcron.sh /usr/local/bin/instant.sh
 
 # Create crontab file
-RUN mkdir -p /etc/cron.d && touch /etc/crontab && chmod 0644 /etc/crontab
+RUN mkdir -p /etc/crontabs && chmod 0755 /etc/crontabs
 
 # Set entrypoint
 ENTRYPOINT ["/usr/local/bin/setcron.sh"]
