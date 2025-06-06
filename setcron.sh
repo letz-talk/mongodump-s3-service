@@ -1,18 +1,11 @@
 #!/bin/bash
 
-echo "Setting up cron with expression: $CRON_EXPRESSION"
-
 # Check if CRON_EXPRESSION is set
-if [ -z "$CRON_EXPRESSION" ]; then
-    echo "Error: CRON_EXPRESSION is not set"
-    exit 1
-fi
+[ -z "$CRON_EXPRESSION" ] && { echo "Error: CRON_EXPRESSION not set"; exit 1; }
 
-# Write cron job to /etc/crontab
-echo "$CRON_EXPRESSION root bash /usr/local/bin/awesomescript.sh" >> /etc/crontab
+# Write cron job to /etc/cron.d/mytask
+echo "$CRON_EXPRESSION root bash /usr/local/bin/awesomescript.sh >> /var/log/awesomescript.log 2>&1" > /etc/cron.d/mytask
 
-# Verify crontab content
-cat /etc/crontab
-
-# Start crond in foreground
-exec cron -f -L 0
+# Start rsyslog and cron
+service rsyslog start
+exec cron -f
