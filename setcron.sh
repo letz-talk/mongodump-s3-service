@@ -1,6 +1,6 @@
 #!/bin/sh
-mkdir -p /etc/crontabs
-echo "*/1 * * * * root bash /usr/local/bin/awesomescript.sh" > /etc/crontabs/root
-chmod 0644 /etc/crontabs/root
-echo "Cron job installed: $(cat /etc/crontabs/root)"
+echo "$CRON_EXPRESSION root bash /usr/local/bin/awesomescript.sh" > /etc/cron.d/mytask
+echo "" >> /etc/cron.d/mytask
+chmod 0644 /etc/cron.d/mytask
+echo "Cron job installed: $(cat /etc/cron.d/mytask)"
 cron -L 8 -f
