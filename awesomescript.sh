@@ -1,4 +1,14 @@
 #!/bin/bash
+# Перенаправляем stdout и stderr в docker logs
+exec 1>>/proc/1/fd/1
+exec 2>>/proc/1/fd/2
+
+echo "Starting awesomescript.sh at $(date)"
+echo "Environment variables:"
+env
+echo "PATH: $PATH"
+echo "Whoami: $(whoami)"
+echo "Working directory: $(pwd)"
 
 if [[ $KEEP_OLD_FILES_DAYS == "" ]]; then
     if [[ $KEEP_OLD_FILES_MINUTES == "" ]]; then
@@ -61,7 +71,7 @@ EOL
 
 echo "Running mongodump and s3 push"
 # Run mongodump
-if mongodump "${args[@]}"; then
+if /usr/bin/mongodump "${args[@]}"; then
     echo "mongodump succeeded"
 else
     echo "mongodump failed"
@@ -72,10 +82,10 @@ else
 fi
 
 # Debug s3cmd version
-echo "s3cmd version: $(s3cmd --version)"
+echo "s3cmd version: $(/usr/bin/s3cmd --version)"
 
 # Run S3 upload with progress in console
-if s3cmd put "$path$filename" s3://$BUCKET_NAME/$BUCKET_PATH/$filename --progress; then
+if /usr/bin/s3cmd put "$path$filename" s3://$BUCKET_NAME/$BUCKET_PATH/$filename --progress; then
     echo "Backup succeeded"
     if [[ -n "$HEALTHCHECK_IO_CHECK_URL" ]]; then
         curl -m 10 --retry 5 "$HEALTHCHECK_IO_CHECK_URL"
@@ -87,5 +97,3 @@ else
     fi
     exit 1
 fi
-
-# node ./deleteOldBackupsFromS3.js
