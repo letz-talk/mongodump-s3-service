@@ -4,16 +4,18 @@ services:
     env_file:
       - .env
     build: .
+    restart: unless-stopped
     networks:
       - letztalk_network
     volumes:
       - backup_vol:/usr/files
-
+    logging:
+      options:
+        max-size: "20m"
+        max-file: "3"
 volumes:
   backup_vol:
-
 networks:
   letztalk_network:
     driver: overlay
     external: true
-

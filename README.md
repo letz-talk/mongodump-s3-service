@@ -1,37 +1,21 @@
-## mongodump-s3-service: For taking mongodump backups and uploading it to an S3 storage.
+## mongodump-s3-service
 
-#### For running container on any host
+Дамп MongoDB (replica set `dbrs`, чтение с secondary) по cron → gzip-архив → Backblaze B2 (`backup-letz`).
 
-```
-docker run --name mongodump-s3-service \
-		   -v ~/backup_files:/usr/files \
-		   --env-file .env \
-		   -d \
-		   rohandhamapurkar/mongodump-s3-service:latest
-```
+- Архивы: `s3://backup-letz/mongodump/<BACKUP_NAME>/mongodump_<UTC>.archive.gz`
+- Результат последнего запуска: `s3://backup-letz/mongodump/<BACKUP_NAME>/status.json`
+  (`result`: `ok` / `dump_failed` / `too_small` / `upload_failed`, `error`, `sizeBytes`).
+  Его и свежесть архивов проверяет `chat_health` (BackupCheck) и шлёт алерты в Telegram.
+- Хранение: lifecycle-правило бакета на префикс `mongodump/` — скрытие через 3 дня, удаление через 1 день после скрытия,
+  незавершённые multipart-загрузки отменяются через 1 день. Скрипт сам в S3 ничего не удаляет.
+- Сервис запущен на `letztalk-prod-fin-1` и `letztalk-pay-se-1` со сдвигом расписания на 6 часов
+  (бэкап раз в 6 часов, с каждого сервера — раз в 12).
 
-Or run it using the docker-compose.yml by cloning this repository
+Запуск: `docker compose up -d --build` (переменные — см. `.sample.env`).
 
-```
-docker-compose up -d
-```
+Бэкап вне расписания: `docker exec mongodump-s3-service_bck_service_1 instant.sh`
 
-#### For taking instant mongodump on any host
+Восстановление: скачать архив и `mongorestore --uri ... --gzip --archive=<file>` (см. `restore/`).
 
-```
-docker exec -it mongodump-s3-service instant
-```
-
-#### For building local image and running the container
-
-```
-docker build --tag mongodump-s3-service:latest .
-
-docker run --name mongodump-s3-service \
-		   -v ~/backup_files:/usr/files \
-		   --env-file .env \
-		   -d \
-		   mongodump-s3-service:latest
-```
-
-### <b>Note: Please refer .sample.env for environment variables that are needed to create .env file</b>
+Сеть `letztalk_network` — зашифрованный overlay: между узлами swarm должен быть разрешён протокол ESP
+(`ufw allow proto esp from <ip узла>`), иначе контейнеры на разных серверах не видят друг друга.
