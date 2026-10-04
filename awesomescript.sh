@@ -110,13 +110,13 @@ filename="mongodump_$(date -u +%Y-%m-%dT%H-%M)Z.archive.gz"
 filepath="$FILES_DIR/$filename"
 
 log "dump $HOSTS (replicaSet=${REPLICA_SET:-none}, readPreference=${READ_PREFERENCE:-secondaryPreferred}) -> $filepath"
-args=(--uri "$URI" --archive="$filepath" --gzip --quiet)
+args=(--uri "$URI" --archive="$filepath" --gzip)
 if [[ -n "$MONGO_USER" && -n "$MONGO_PASSWORD" ]]; then
     args+=(--username "$MONGO_USER" --password "$MONGO_PASSWORD")
 fi
 DUMP_START=$(date +%s)
 if ! /usr/bin/mongodump "${args[@]}" 2>/tmp/mongodump_err.txt; then
-    err=$(grep -v -i password /tmp/mongodump_err.txt | tail -3)
+    err=$(grep -v -i password /tmp/mongodump_err.txt | grep -i -E "fail|error" | tail -2)
     rm -f "$filepath"
     fail dump_failed "mongodump: $err" "$filename"
 fi
