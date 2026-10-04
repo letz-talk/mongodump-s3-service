@@ -9,8 +9,8 @@ RUN apt-get update && apt-get install -y \
     wget \
     && rm -rf /var/lib/apt/lists/*
 
-# Install mongodb-database-tools compatible with MongoDB 5.0
-RUN wget https://fastdl.mongodb.org/tools/db/mongodb-database-tools-ubuntu2004-x86_64-100.5.0.deb && \
+# Install mongodb-database-tools compatible with MongoDB 4.2–8.0
+RUN wget https://fastdl.mongodb.org/tools/db/mongodb-database-tools-ubuntu2004-x86_64-100.10.0.deb && \
     dpkg -i mongodb-database-tools-*.deb && \
     rm mongodb-database-tools-*.deb
 
