@@ -18,6 +18,7 @@ RUN wget https://fastdl.mongodb.org/tools/db/mongodb-database-tools-ubuntu2004-x
 COPY awesomescript.sh /usr/local/bin/awesomescript.sh
 COPY setcron.sh /usr/local/bin/setcron.sh
 COPY instant.sh /usr/local/bin/instant.sh
+COPY prune.py /usr/local/bin/prune.py
 
 # Make scripts executable
 RUN chmod +x /usr/local/bin/awesomescript.sh /usr/local/bin/setcron.sh /usr/local/bin/instant.sh

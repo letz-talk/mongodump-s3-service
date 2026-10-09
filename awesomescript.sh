@@ -3,8 +3,9 @@
 #
 # Результат каждого запуска пишется в s3://$BUCKET_NAME/$BUCKET_PATH/status.json —
 # по нему и по свежести архивов chat_health шлёт алерты в Telegram.
-# Хранение старых архивов — lifecycle-правило бакета на префикс mongodump/ (скрытие через 3 дня),
-# сам скрипт в S3 ничего не удаляет.
+# Хранение: после успешного бэкапа prune.py прореживает архивы всех серверов (до 12 ч — все,
+# 12–48 ч — по одному на 6 ч, старше — по одному на 12 ч); верхнюю границу задаёт lifecycle-правило
+# бакета на префикс mongodump/ (скрытие через 3 дня).
 #
 # Секреты в лог не печатаются (раньше скрипт делал `env` и светил пароли в docker logs).
 
@@ -147,6 +148,12 @@ rm -f "$filepath"
 log "uploaded $S3_DEST/$filename in $(( $(date +%s) - UPLOAD_START ))s"
 write_status ok "" "$filename" "$size"
 log "backup succeeded"
+
+# Прореживание старых архивов (ошибка здесь не делает бэкап неудачным)
+if [[ "${PRUNE_ENABLED:-1}" == "1" ]]; then
+    S3CFG="$S3CFG" BUCKET_NAME="$BUCKET_NAME" PRUNE_PREFIX="${PRUNE_PREFIX:-mongodump/}" \
+        python3 /usr/local/bin/prune.py || log "WARNING: prune failed"
+fi
 
 # Совместимость: внешний healthchecks.io-пинг, если задан
 if [[ -n "$HEALTHCHECK_IO_CHECK_URL" ]]; then
