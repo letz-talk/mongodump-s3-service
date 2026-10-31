@@ -11,7 +11,9 @@
 Защита: самый свежий архив каждого сервера не удаляется никогда; файлы с другими именами
 (status.json и т.п.) не трогаются; при ошибке листинга или пустом списке ничего не удаляется.
 
-Переменные окружения: S3CFG, BUCKET_NAME, PRUNE_PREFIX (mongodump/), PRUNE_DRY_RUN=1 — только показать.
+Переменные окружения: S3CFG, BUCKET_NAME, PRUNE_PREFIX (mongodump/), PRUNE_DRY_RUN=1 — только показать,
+PRUNE_MAX_AGE_DAYS — удалять архивы старше N дней (для префиксов без lifecycle-правила, например mongodump-stage/),
+PRUNE_KEEP_LAST — хранить только N последних архивов каждого сервера (вместо окон; например 3 для стейджа).
 В B2 удаление через S3 API скрывает файл; окончательно его удаляет lifecycle через сутки после скрытия.
 """
 import os
@@ -59,6 +61,19 @@ def plan(keys, now):
         if win not in best or i['ts'] > best[win]['ts']:
             best[win] = i
     keep.update(i['key'] for i in best.values())
+    # фиксированное число последних архивов каждого сервера (заменяет окна)
+    keep_last = os.environ.get('PRUNE_KEEP_LAST')
+    if keep_last:
+        n = max(1, int(keep_last))
+        keep = set()
+        for server in {i['server'] for i in items}:
+            own = sorted((i for i in items if i['server'] == server), key=lambda i: i['ts'], reverse=True)
+            keep.update(i['key'] for i in own[:n])
+    # жёсткий предел хранения (кроме самого свежего архива каждого сервера)
+    max_age_days = os.environ.get('PRUNE_MAX_AGE_DAYS')
+    if max_age_days:
+        latest = {max((j for j in items if j['server'] == srv), key=lambda j: j['ts'])['key'] for srv in {j['server'] for j in items}}
+        keep = {k for k in keep if k in latest or next(j for j in items if j['key'] == k)['age'] < float(max_age_days) * 86400}
     delete = sorted((i for i in items if i['key'] not in keep), key=lambda i: i['ts'])
     kept = sorted((i for i in items if i['key'] in keep), key=lambda i: i['ts'])
     return kept, delete
