@@ -1,0 +1,9 @@
+# health-ne-1: дамп рядом с MongoDB (chat5), мало памяти — ограничиваем контейнер,
+# и при нехватке памяти ядро убивает дамп, а не mongod.
+# docker-compose -f docker-compose.yml -f docker-compose.health.yml up -d --build
+version: "3.4"
+services:
+  bck_service:
+    mem_limit: 900m
+    memswap_limit: 900m
+    oom_score_adj: 1000

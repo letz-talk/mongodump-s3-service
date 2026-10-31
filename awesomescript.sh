@@ -110,42 +110,75 @@ fi
 filename="mongodump_$(date -u +%Y-%m-%dT%H-%M)Z.archive.gz"
 filepath="$FILES_DIR/$filename"
 
-log "dump $HOSTS (replicaSet=${REPLICA_SET:-none}, readPreference=${READ_PREFERENCE:-secondaryPreferred}) -> $filepath"
-args=(--uri "$URI" --archive="$filepath" --gzip)
+args=(--uri "$URI" --gzip)
 if [[ -n "$MONGO_USER" && -n "$MONGO_PASSWORD" ]]; then
     args+=(--username "$MONGO_USER" --password "$MONGO_PASSWORD")
 fi
-DUMP_START=$(date +%s)
-if ! /usr/bin/mongodump "${args[@]}" 2>/tmp/mongodump_err.txt; then
-    err=$(grep -v -i password /tmp/mongodump_err.txt | grep -i -E "fail|error" | tail -2)
-    rm -f "$filepath"
-    fail dump_failed "mongodump: $err" "$filename"
+# Сколько коллекций дампить параллельно (по умолчанию у mongodump 4); 1 — меньше памяти
+if [[ -n "$MONGODUMP_PARALLEL_COLLECTIONS" ]]; then
+    args+=(--numParallelCollections "$MONGODUMP_PARALLEL_COLLECTIONS")
 fi
-size=$(stat -c %s "$filepath")
-log "dump done in $(( $(date +%s) - DUMP_START ))s, size $(( size / 1024 / 1024 ))MB"
-if (( size < MIN_DUMP_SIZE_MB * 1024 * 1024 )); then
-    rm -f "$filepath"
-    fail too_small "dump is only $(( size / 1024 / 1024 ))MB (< ${MIN_DUMP_SIZE_MB}MB)" "$filename" "$size"
-fi
-
-UPLOAD_START=$(date +%s)
-uploaded=0
-for attempt in $(seq 1 "$UPLOAD_ATTEMPTS"); do
-    # --no-progress: прогресс-бар писал в docker logs гигантские строки, из-за которых docker logs переставал читаться
-    if s3cmd -c "$S3CFG" --no-progress put "$filepath" "$S3_DEST/$filename" >/tmp/s3_out.txt 2>&1; then
-        uploaded=1
-        break
-    fi
-    log "upload attempt $attempt failed: $(grep -i error /tmp/s3_out.txt | tail -1)"
-    sleep 30
+# Не бэкапить коллекции (через запятую, имена без БД): например служебный мониторинг
+IFS=',' read -ra EXCLUDES <<< "${EXCLUDE_COLLECTIONS:-}"
+for c in "${EXCLUDES[@]}"; do
+    [[ -n "$c" ]] && args+=(--excludeCollection "$c")
 done
-if (( ! uploaded )); then
-    err=$(grep -i error /tmp/s3_out.txt | tail -1)
+
+DUMP_START=$(date +%s)
+if [[ "${STREAM_UPLOAD:-0}" == "1" ]]; then
+    # Потоком прямо в S3, без локального файла: для сервера рядом с MongoDB, где мало диска.
+    # Ретраев загрузки нет (поток не повторить) — при сбое следующий запуск по расписанию.
+    log "dump $HOSTS (replicaSet=${REPLICA_SET:-none}, readPreference=${READ_PREFERENCE:-secondaryPreferred}) -> stream -> $S3_DEST/$filename"
+    set -o pipefail
+    if ! /usr/bin/mongodump "${args[@]}" --archive 2>/tmp/mongodump_err.txt \
+        | s3cmd -c "$S3CFG" --no-progress put - "$S3_DEST/$filename" >/tmp/s3_out.txt 2>&1; then
+        set +o pipefail
+        err=$(grep -v -i password /tmp/mongodump_err.txt | grep -i -E "fail|error" | tail -2)
+        [[ -z "$err" ]] && err="s3: $(grep -i error /tmp/s3_out.txt | tail -1)"
+        s3cmd -c "$S3CFG" del "$S3_DEST/$filename" >/dev/null 2>&1
+        fail dump_failed "stream: $err" "$filename"
+    fi
+    set +o pipefail
+    size=$(s3cmd -c "$S3CFG" ls "$S3_DEST/$filename" 2>/dev/null | awk '{print $3}' | head -1)
+    size=${size:-0}
+    log "dump+upload done in $(( $(date +%s) - DUMP_START ))s, size $(( size / 1024 / 1024 ))MB"
+    if (( size < MIN_DUMP_SIZE_MB * 1024 * 1024 )); then
+        s3cmd -c "$S3CFG" del "$S3_DEST/$filename" >/dev/null 2>&1
+        fail too_small "dump is only $(( size / 1024 / 1024 ))MB (< ${MIN_DUMP_SIZE_MB}MB)" "$filename" "$size"
+    fi
+else
+    log "dump $HOSTS (replicaSet=${REPLICA_SET:-none}, readPreference=${READ_PREFERENCE:-secondaryPreferred}) -> $filepath"
+    if ! /usr/bin/mongodump "${args[@]}" --archive="$filepath" 2>/tmp/mongodump_err.txt; then
+        err=$(grep -v -i password /tmp/mongodump_err.txt | grep -i -E "fail|error" | tail -2)
+        rm -f "$filepath"
+        fail dump_failed "mongodump: $err" "$filename"
+    fi
+    size=$(stat -c %s "$filepath")
+    log "dump done in $(( $(date +%s) - DUMP_START ))s, size $(( size / 1024 / 1024 ))MB"
+    if (( size < MIN_DUMP_SIZE_MB * 1024 * 1024 )); then
+        rm -f "$filepath"
+        fail too_small "dump is only $(( size / 1024 / 1024 ))MB (< ${MIN_DUMP_SIZE_MB}MB)" "$filename" "$size"
+    fi
+
+    UPLOAD_START=$(date +%s)
+    uploaded=0
+    for attempt in $(seq 1 "$UPLOAD_ATTEMPTS"); do
+        # --no-progress: прогресс-бар писал в docker logs гигантские строки, из-за которых docker logs переставал читаться
+        if s3cmd -c "$S3CFG" --no-progress put "$filepath" "$S3_DEST/$filename" >/tmp/s3_out.txt 2>&1; then
+            uploaded=1
+            break
+        fi
+        log "upload attempt $attempt failed: $(grep -i error /tmp/s3_out.txt | tail -1)"
+        sleep 30
+    done
+    if (( ! uploaded )); then
+        err=$(grep -i error /tmp/s3_out.txt | tail -1)
+        rm -f "$filepath"
+        fail upload_failed "s3: $err" "$filename" "$size"
+    fi
     rm -f "$filepath"
-    fail upload_failed "s3: $err" "$filename" "$size"
+    log "uploaded $S3_DEST/$filename in $(( $(date +%s) - UPLOAD_START ))s"
 fi
-rm -f "$filepath"
-log "uploaded $S3_DEST/$filename in $(( $(date +%s) - UPLOAD_START ))s"
 write_status ok "" "$filename" "$size"
 log "backup succeeded"
 
