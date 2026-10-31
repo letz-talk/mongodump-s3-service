@@ -68,7 +68,7 @@ host_base = ${ENDPOINT#https://}
 host_bucket = ${ENDPOINT#https://}
 use_https = True
 bucket_location = ${DEFAULT_REGION:-us-east-1}
-multipart_chunk_size_mb = 100
+multipart_chunk_size_mb = ${S3_CHUNK_MB:-100}
 EOL
 
 STARTED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
