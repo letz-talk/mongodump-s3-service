@@ -1,0 +1,23 @@
+# stage-fin-1: дамп стейджевой MongoDB (mongo_chat, сеть chat_back_default) раз в сутки потоком в B2,
+# префикс mongodump-stage/ (отдельно от прода: окна прореживания общие для серверов в префиксе).
+# docker-compose -f docker-compose.stage.yml up -d --build
+version: "3.4"
+services:
+  bck_service:
+    env_file:
+      - .env
+    build: .
+    restart: unless-stopped
+    networks:
+      - stage_network
+    mem_limit: 700m
+    memswap_limit: 700m
+    oom_score_adj: 1000
+    logging:
+      options:
+        max-size: "20m"
+        max-file: "3"
+networks:
+  stage_network:
+    external: true
+    name: ${STAGE_NETWORK:-chat_back_default}
